@@ -52,7 +52,13 @@ const PatientsSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    history: [{ date: { type: String } }, { description: { type: String } }],
+    history: [
+      {
+        date: { type: String },
+        test: { type: String },
+        description: { type: String },
+      },
+    ],
   },
   { timestamps: true }
 );

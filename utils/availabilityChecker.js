@@ -59,7 +59,7 @@ const availabilityChecker = () => {
 
       const updateError = [];
       for (const link of doc) {
-        console.log("this is hospital list", link);
+        // console.log("this is hospital list", link);
 
         const { _id, patients_API } = link;
         try {

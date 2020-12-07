@@ -53,11 +53,13 @@ const fetchUpdate = () => {
         console.log("Oops, something gone wrong");
       });
   }
+
+  // console.log("Fetched Cron started every second");
 };
 
 const availabilityUpdate = () => {
   if (useAvailabilityCronJob) {
-    console.log("...Running Fetch Cron Job");
+    console.log("...Running Availability Cron Job");
     availabilityChecker()
       .then((res) => {
         console.log("Availability Cron Job Finished");
@@ -86,7 +88,6 @@ const listen = async () => {
   availabilityCronJob = availability;
 
   // starting fetching cron job
-  console.log(fetchCronJob);
   let FetchCron = cron.schedule("* * * * * *", fetchUpdate);
   let AvailabilityCron = cron.schedule("* * * * * *", availabilityUpdate);
 
@@ -127,7 +128,7 @@ const listen = async () => {
     } catch (err) {
       console.log(err);
     }
-  }, 10000);
+  }, 5000);
 };
 
 const connection = connectToDb();

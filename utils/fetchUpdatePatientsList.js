@@ -8,7 +8,7 @@ const ApplicationAPISettings = require("../model/ApplicationSettings");
 const Patients = require("../model/patients");
 const Hospital = require("../model/hospital");
 
-const fetchCall = (url, callback, error = (err) => console.log(err)) => {
+const fetchCall = (url, callback, error) => {
   /**
    * Prepare the Tokens to fetch from the api
    */
@@ -16,7 +16,7 @@ const fetchCall = (url, callback, error = (err) => console.log(err)) => {
     //  parallel()
 
     const authToken =
-      "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7Il9pZCI6IjVmYWQ4ZWQ1MDgwYzA4NTNiMTY2NDBjNCJ9LCJpYXQiOjE2MDY4MjAzMDIsImV4cCI6MTYwNzQyNTEwMn0.F-PmYtI2P0o10fk6m7lpS8GhM5X6aDwNbONWRm1KCHo";
+      "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7Il9pZCI6IjVmYWQ4ZWQ1MDgwYzA4NTNiMTY2NDBjNCJ9LCJpYXQiOjE2MDcxNjU3MTUsImV4cCI6MTYwNzc3MDUxNX0.LUnBeCZQXzoLMHkpPuPSwbhdbP8oPtsR-CpSitdqp8Y";
 
     axios
       .get(`${url}`, { headers: { Authorization: authToken } })
@@ -52,6 +52,7 @@ const fetchUpdatePatientsList = async () => {
       if (Array.isArray(hospitalDocuments)) {
         for (const hospital of hospitalDocuments) {
           try {
+            // await Promise.all()
             updateHospitalAvailability(
               { isFetching: true },
               { _id: hospital._id },
@@ -64,8 +65,33 @@ const fetchUpdatePatientsList = async () => {
               "ApplicationAPISettings"
             );
 
-            const patients_data = await fetch(hospital.patients_API);
-            const doctor_data = await fetch(hospital.doctor_API);
+            fetch(hospital.patients_API)
+              .then((patients_data) => {
+                patients_data.data.map((item) => {
+                  item._id = item._id || item.id;
+                  delete item.id;
+                });
+
+                if (patients_data.data) {
+                  csvStringify(
+                    patients_data.data,
+                    { header: true },
+                    (err, output) => {
+                      fs.writeFile(
+                        `../MedicPortal DataProcessing/FetchedData/${hospital.HospitalName}.csv`,
+                        output,
+                        (err) => {
+                          console.log(err);
+                        }
+                      );
+                    }
+                  );
+                }
+
+                resolved.push({ patientList: patients_data.data });
+              })
+              .catch((err) => console.log(err));
+            // const doctor_data = await fetch(hospital.doctor_API);
 
             /**
              * Getting the Data from the hospital included API
@@ -83,44 +109,20 @@ const fetchUpdatePatientsList = async () => {
               "ApplicationAPISettings"
             );
 
-            // console.log("This is Hospital Data");
-            // console.log(patients_data.data);
-            // console.log(doctor_data.data);
-
             /**
              * Write the Fetched Data to a File
              */
-            // fs.writeFile(
-            //   `../MedicPortal DataProcessing/FetchedData/${hospital.HospitalName}.csv`,
-            //   JSON.stringify(patients_data.data),
-            //   (err) => {
-            //     console.log(err);
-            //   }
-            // );
-
-            csvStringify(
-              patients_data.data.patients,
-              { header: true },
-              (err, output) => {
-                fs.writeFile(
-                  `../MedicPortal DataProcessing/FetchedData/${hospital.HospitalName}.csv`,
-                  output,
-                  (err) => {
-                    console.log(err);
-                  }
-                );
-              }
-            );
-
-            resolved.push({ patientList: patients_data.data });
           } catch (error) {
-            errors.push({ _id: hospital._d, result });
+            // errors.push({ _id: hospital._d, result });
+            console.log("Fetch Error", error);
           }
         }
       }
-      // console.log("=======", resolved);
+
+      console.log("This is resolved", resolved);
       resolve(resolved);
     } catch (err) {
+      console.log(err);
       reject(err.message || "AN Error Occured");
     }
   });
